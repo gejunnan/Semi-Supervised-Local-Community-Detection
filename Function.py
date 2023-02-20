@@ -211,15 +211,11 @@ def node_sub(nodev,G,C):
                           Parameters:      nodev:节点 G：网络图 C社区
                           Returns：       节点子图对应的节点
                           ---------------------------------------------------------------------------------"""
-    local_com=[]
     first_node = [nodev]
     pick_second_node = list(set(list(G.neighbors(nodev))) & set(C))
     common_nei_length = cal_common_nei(pick_second_node, G)
     second_node = pick_second_node[common_nei_length.index(max(common_nei_length))]
     third_nodes = list(set(list(G.neighbors(second_node))) & set(C))
-    local_com.extend(first_node)
-    local_com.append(second_node)
-    local_com.extend(third_nodes)
-    local_com = list(set(local_com))
+    local_com = list(set(first_node).union(third_nodes).union([second_node]))
     return local_com
 
