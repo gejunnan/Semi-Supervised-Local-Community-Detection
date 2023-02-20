@@ -1,8 +1,0 @@
-[amazon]
-# nodes = 334,863
-# edges = 925,872
-# comms(filtered <= 30) = 4,517
-====================
-[amazon-1: subgraph with nodes in comms' 1-ego net]
-# nodes = 13,178
-# edges = 33,767
