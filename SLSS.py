@@ -56,98 +56,57 @@ def  M(nodei,G):
             break
     return C
 
-def constructedGraph(filename1,knowcomcom):
-    "构建已知社区对应的最短路径相似性图"
-    com10 = knowcomcom#获得数据集的已知社区
-    maxsize=max([len(jj) for jj in com10])#获得已知社区中最大的社区尺寸
-    sp_graph = Function.knowknow(com10, filename1) #10个已知社区转换成最短路径形式表示的图
-    sp = ShortestPath(normalize=True, with_labels=False) #初始化最短路径核
-    sp22 = sp.fit_transform(sp_graph) #提取10个已知社区的特征
-    sp2=np.nan_to_num(sp22)
-    mean = []
-    for i1 in range(len(sp2)):
-        for i2 in range(i1+1,len(sp2)):
-            mean.append(sp2[i1][i2])#获取数组上三角以上的元素
-    inde = math.ceil(len(mean) / 2)-1 #计算出中位数
-    value_inde = sorted(mean)[inde]
-    G4=nx.Graph()
-    for i in range(len(sp2)):
-        for j in range(i + 1, len(sp2)):
-            if sp2[i][j]>value_inde:
-                G4.add_edge(i,j,weight=sp2[i][j])
-    return G4,value_inde,com10,sp_graph,maxsize
 
-def constructG(C,filename2,G4,com10,sp_graph,value_inde):
-    "判断社区C是否在相似性图中"
-    G1=Function.networkx(filename2)
-    C_sp_graph = Function.spgraph(C, G1) #将社区C转换成最短路径形式表示的图
-    sp0 = ShortestPath(normalize=True, with_labels=False)
-    sp0.fit_transform(sp_graph)
-    sp00 = sp0.transform([C_sp_graph]) #计算社区C和10个已知社区的相似性
-    sp00=np.nan_to_num(sp00)
-    sp00=sp00.tolist()
-    G5=copy.deepcopy(G4) #深拷贝，防止多进程代码出现错误
-    for jjj in range(len(sp_graph)):
-        if sp00[0][jjj]>value_inde:
-            G5.add_edge(len(sp_graph), jjj, weight=sp00[0][jjj])#判断是否将节点i所在的社区C加入到相似性图中
-    #G5是由G4修改的图，com10是10个已知社区，len（sp_graph)是社区编号10
-    return G5,com10,len(sp_graph)
-
-def M2(nodei, G, com10):
+def M2(nodei, G):
     "从给定的已知社区中挑选节点i所对应的已知社区"
     C = []
     N = []
-    comcom=[]
-    if nodei not in G.nodes:
-        for com1 in com10:
-            comcom.append(com1)#如果节点nodei不在G中,则nodei所对应的已知社区就是给定的已知社区
-    else:
-        for node in list(G.neighbors(nodei)):
-            N.append(node)
-        C.append(nodei)
-        edge = G.edges(nodei)
-        e_c = 0
-        e_out = []
-        for i in edge:
-            weight = list(G.get_edge_data(list(i)[0], list(i)[1]).values())[0]
-            e_out.append(weight)
-        M = e_c / sum(e_out)
-        while True:
-            Mmax = -1000
-            vbest = 0
-            candidate_node = []
-            if len(N) == 0:
-                break
-            for nodev in N:
-                candidate_node.append(nodev)
-                candidate_com = list(set(C) | {nodev})
-                inedge, outedge = Function.cal_inner_outer_C(candidate_com, G)
-                com_inedge = []
-                for ii in inedge:
-                    com_inedge1 = list(G.get_edge_data(list(ii)[0], list(ii)[1]).values())[0]
-                    com_inedge.append(com_inedge1)
-                com_outedge = []
-                for jj in outedge:
-                    com_outedge1 = list(G.get_edge_data(list(jj)[0], list(jj)[1]).values())[0]
-                    com_outedge.append(com_outedge1)
-                Mnew = sum(com_inedge) / (sum(com_outedge) + 1e-9)
-                if Mnew > Mmax:
-                    Mmax = Mnew
-                    vbest = nodev
-            if Mmax >= M:
-                M = Mmax
-                C.append(vbest)
-                N.remove(vbest)
-                for n in G.neighbors(vbest):
-                    if n not in C:
-                        N.append(n)
-                N = list(set(N))
-            else:
-                break
-        del C[0]
-        for iii in C:
-            comcom.append(com10[iii])
-    return comcom
+
+    for node in list(G.neighbors(nodei)):
+        N.append(node)
+    C.append(nodei)
+    edge = G.edges(nodei)
+    e_c = 0
+    e_out = []
+    for i in edge:
+        weight = list(G.get_edge_data(list(i)[0], list(i)[1]).values())[0]
+        e_out.append(weight)
+    M = e_c / sum(e_out)
+    while True:
+        Mmax = -1000
+        vbest = 0
+        candidate_node = []
+        if len(N) == 0:
+            break
+        for nodev in N:
+            candidate_node.append(nodev)
+            candidate_com = list(set(C) | {nodev})
+            inedge, outedge = Function.cal_inner_outer_C(candidate_com, G)
+            com_inedge = []
+            for ii in inedge:
+                com_inedge1 = list(G.get_edge_data(list(ii)[0], list(ii)[1]).values())[0]
+                com_inedge.append(com_inedge1)
+            com_outedge = []
+            for jj in outedge:
+                com_outedge1 = list(G.get_edge_data(list(jj)[0], list(jj)[1]).values())[0]
+                com_outedge.append(com_outedge1)
+            Mnew = sum(com_inedge) / (sum(com_outedge) + 1e-9)
+            if Mnew > Mmax:
+                Mmax = Mnew
+                vbest = nodev
+        if Mmax >= M:
+            M = Mmax
+            C.append(vbest)
+            N.remove(vbest)
+            for n in G.neighbors(vbest):
+                if n not in C:
+                    N.append(n)
+            N = list(set(N))
+        else:
+            break
+    del C[0]
+
+    return C,M
 
 def  first_stage(nodei,G):
     "SLSS方法第一阶段，挑选公共邻居数且度大的节点"
@@ -190,7 +149,8 @@ def community_similarity(C1,N1,local_com,G,global_com,maxsize,quanzhong):
             Mnew=round((com_inedge/(com_outedge+1e-9)),4)#计算候选社区的模块度
             candidate_modularity.append(Mnew)
             candidate_com_graph=Function.spgraph(candidate_com, G)
-            candidate_similarity= global_sp.transform([candidate_com_graph])[0].tolist()#计算候选社区和已知社区的相似性
+            candidate_similarity = np.nan_to_num(global_sp.transform([candidate_com_graph]))
+            candidate_similarity = candidate_similarity[0].tolist()
             Snew = round((sum(candidate_similarity) / len(candidate_similarity)),4)#候选社区和与已知社区相似性取均值来作为候选社区的相似性
             candidate_global_similarity.append(Snew)
             #当候选社区相似性都大于平均社区历史相似性，选择候选社区模块度最大的节点，来作为候选节点，来往社区C里面添加节点
@@ -236,7 +196,7 @@ def community_similarity(C1,N1,local_com,G,global_com,maxsize,quanzhong):
             third_nodes = list(set(list(G.neighbors(second_node))) & set(C))
             local_com1=list(set(first_node).union(third_nodes).union([second_node]))
             local_subgraph1 = Function.spgraph(local_com1, G)
-            weight_s1 = np.multiply(np.array(local_subgraph_weight),np.array(local_sp.transform([local_subgraph1])[0].tolist())).tolist()
+            weight_s1 = np.multiply(np.array(local_subgraph_weight),np.array(np.nan_to_num(local_sp.transform([local_subgraph1]))[0].tolist())).tolist()
             Similarity1 = round((sum(weight_s1) / sum(local_subgraph_weight)), 4)
             local_used_similarity.append(Similarity1)
             global_used_similarity.append(candidate_global_similarity[index_node1])
@@ -310,20 +270,94 @@ def node_similarity(C1,N1,local_com,G,global_com,maxsize,quanzhong,localsmi):
 def select_com(C, filename1111,comcom11,G):
     detected_C_graph = Function.spgraph(C, G)
     sp_graph = Function.knowknow(comcom11, filename1111)  # 10个已知社区转换成最短路径形式表示的图
+    sp_graph.append(detected_C_graph)
+    sp = ShortestPath(normalize=True, with_labels=False)  # 初始化最短路径核
+    temp = sp.fit_transform(sp_graph)  # 提取10个已知社区的特征
+    temp = np.nan_to_num(temp)
+    average = np.average(temp, axis=0)
+    coms_id = []
+    threshold = average[len(sp_graph) - 1]
+    for i in range(len(sp_graph) - 1):
+        ele = temp[len(sp_graph) - 1][i]
+        if ele > threshold and ele > average[i]:
+            coms_id.append(i)
+    if len(coms_id) == 0:
+        for i in range(len(sp_graph) - 1):
+            ele = temp[len(sp_graph) - 1][i]
+            if ele > threshold:
+                coms_id.append(i)
+    return coms_id
+
+
+def select_com1(C, filename1111,comcom11,G):
+    detected_C_graph = Function.spgraph(C, G)
+    sp_graph = Function.knowknow(comcom11, filename1111)  # 10个已知社区转换成最短路径形式表示的图
     sp = ShortestPath(normalize=True, with_labels=False)  # 初始化最短路径核
     sp.fit_transform(sp_graph)  # 提取10个已知社区的特征
     sp00 = sp.transform([detected_C_graph])  # 两两已知社区计算相似性 两维数组形式存储的
+    sp00 = np.nan_to_num(sp00)
     sp00 = sp00.tolist()[0]
     comSim = {}  # by nili ，把a1 换成comSim, key是社区编号， Value是相似性
     for iq1 in range(len(sp00)):
         comSim[iq1] = sp00[iq1]
     comSort = sorted(comSim.items(), key=lambda x: x[1], reverse=True)
-    coms_id=[list(yy)[0] for yy in comSort[:10]]
+    coms_id=[list(yy)[0] for yy in comSort]
     return coms_id
+
+def simi_num(com101,fileedge):
+    sp_graph = Function.subgraphsubgraph(com101, fileedge)
+    sp =ShortestPath(normalize=True, with_labels=False)
+    sp.fit_transform(sp_graph)
+    similarity = sp.transform(sp_graph)
+    similarity = np.nan_to_num(similarity)
+    return similarity
+
+def si45(nv0,com101,fileedge):
+    #print("com101",len(com101))
+    si=simi_num(com101,fileedge) #计算两两社区相似性
+    si=np.nan_to_num(si)
+    edge_sim={}
+    #print("si",si)
+    for i in range(len(si)):
+        for j in range(i+1,len(si)):
+            edge_sim[(i,j)]=si[i][j]
+    know_sim=sorted(edge_sim.items(),key=lambda x:x[1],reverse=True)#对相似性值排序
+    modu = []
+    comid=[]
+    n=0#len(si)#int(len(know_sim)*0.1)
+    g1=nx.Graph()
+    #print("nv0",nv0)
+    while n<=len(know_sim):
+        #print(list(know_sim[n][0])[0], list(know_sim[n][0])[1])
+        g1.add_edge(list(know_sim[n][0])[0], list(know_sim[n][0])[1], weight=know_sim[n][1])
+        #print('look',n, len(si))
+        if nv0 in g1.nodes and n>=(len(si)-1):
+
+            C,M =M2(nv0,g1)
+            #print("M",M, len(si), len(g1.nodes))
+            if M>1000:
+                if (len(C))==(len(si)-1):
+                    modu.append(-1)
+                    comid.append(C)
+                else:
+                    modu.append(1000)
+                    comid.append(C)
+                break
+            else:
+                modu.append(M)
+                comid.append(C)
+        n+=1
+    # print("modu,", modu)
+    # print("comid,", comid)
+    index = modu.index(max(modu))#挑选模块度最大的社区id
+    #print("comid[index]",len(comid[index]))
+    return comid[index]
+
+
 
 def Go(para):
     i = para[0]
-    filename, knowcomcom, file,  = para[1], para[2], para[3]
+    filename, knowcomcom, file,  maxsize1= para[1], para[2], para[3],para[4]
     f = open(file + str(i), "w", encoding="utf-8")
     G = Function.networkx(filename)
     C11 = M(i, G)  # 通过M方法获得种子节点所在的社区
@@ -334,22 +368,20 @@ def Go(para):
     extraNodes = list(componentsNodes.union(C11))
     extraNodes.append(i)
     extraNodes=list(set(extraNodes))
-    extrasubG = G.subgraph(extraNodes)  #  改成extrasubG
-    temp = copy.deepcopy(extraNodes)
+    extrasubG = G.subgraph(extraNodes)  # g22 改成extrasubG
+    temp = copy.deepcopy(extraNodes)#获得给节点所在的局部结构
     extraNodes.remove(i)
-    for ii in temp:
+    for ii in extraNodes:
         if extrasubG.degree(ii)==1 and ii not in list(extrasubG.neighbors(i)):
             temp.remove(ii)
-    # selectID = select_com(temp, filename, knowcomcom,G)
-    # com10 = []
-    # for i11 in selectID:
-    #     com10.append(knowcomcom[i11])
-    com10=knowcomcom
-    G4, value_inde, com10, sp_graph, maxsize1 = constructedGraph(filename, com10)
-    G5, com10, value11 = constructG(temp, filename, G4, com10, sp_graph, value_inde)
-    # 获得新的权重图
-    comcom = M2(value11, G5, com10)  # 从10个已知社区中挑选符合节点i所在的社区
-    graph, subgraph, quanzhong = Function.graph_subgraph_weight(comcom, filename)
+    com10 = copy.deepcopy(knowcomcom)
+    nv0=len(com10)
+    com10.append(temp)
+    comid=si45(nv0,com10,filename)#通过算法5获得社区id
+    com1010=[]
+    for uy in comid:
+        com1010.append(com10[uy])
+    graph, subgraph, quanzhong = Function.graph_subgraph_weight(com1010, filename)
     # 根据comcom来提取已知社区的社区子图，节点子图，及权重
     local_com = Function.subgraphsubgraph(subgraph, filename)
     global_com = Function.subgraphsubgraph(graph, filename)  # 转换成最短路径形式表示的图
@@ -362,27 +394,26 @@ def Go(para):
 
 
 
-
-
 if __name__ == '__main__':
-    seed = Function.seed() # 数据集的种子节点
-    knowcom = ['dataset/amazon_knowcom', 'dataset/dblp_knowcom', 'dataset/facebook_knowcom','dataset/twitter_knowcom', 'dataset/lj_knowcom']
-    fileedge = ['amazon-1.90.ungraph.txt', 'dblp-1.90.ungraph.txt', 'facebook-1.90.ungraph.txt','twitter-1.90.ungraph.txt', 'lj-1.90.ungraph.txt']
-    path = ['amazon', 'dblp', 'facebook','twitter', 'lj']
+    seed = Function.big_dataset_seed_top()  # 数据集的种子节点
+    knowcom = ['dataset/amazon_knowcom', 'dataset/dblp_knowcom','dataset/facebook_knowcom',  'dataset/twitter_knowcom', 'dataset/lj_knowcom']
+    fileedge = ['amazon-1.90.ungraph.txt', 'dblp-1.90.ungraph.txt','facebook-1.90.ungraph.txt', 'twitter-1.90.ungraph.txt', 'lj-1.90.ungraph.txt']
+    path = ['amazon', 'dblp', 'facebook', 'twitter', 'lj']
     datasets = list(zip(seed, knowcom, fileedge, path))
-    for filename in datasets[:1]: #跑Amazon数据集
+    for filename in datasets:
         print("数据集：", filename[3])
         dataset_knowcom = Function.get_knowcom(filename[1])
         for i in range(1,6):  # 五组已知社区
-            print("第", i, "组已知社区")
+            print("第", i, len(dataset_knowcom[i - 1]), "组已知社区")
             start = datetime.datetime.now()
-            knowcomcom = dataset_knowcom[i-1]
+            knowcomcom = dataset_knowcom[i - 1]
+            maxsize = max([len(jjj) for jjj in knowcomcom])
             filename_edge = "dataset/" + filename[2]  # 数据集对应边的路径
-            nodelist = filename[0] # 获取数据集的种子节点
-            savefile = "SLSS6.2_Results/" + filename[3] + "/" + str(i) + "/"  # 把每个节点找到的社区写入文件中
+            nodelist = filename[0]  # 获取数据集的种子节点
+            savefile = "SLSS6.2/" + filename[3] + "/" + str(i) + "/"  # 把每个节点找到的社区写入文件中
             if os.path.isdir(os.path.dirname(savefile)) == False:  # 创建目录
                 os.makedirs(os.path.dirname(savefile))
-            plist = [[node, filename_edge, knowcomcom, savefile] for node in
+            plist = [[node, filename_edge, knowcomcom, savefile, maxsize] for node in
                      nodelist]
             pool = multiprocessing.Pool(processes=2)  # 开启的进程数量
             pool.map(Go, plist)
@@ -391,7 +422,6 @@ if __name__ == '__main__':
             end = datetime.datetime.now()
             print("节点个数：", len(nodelist))
             print("耗时：{}".format(end - start))
-
 
 
 
