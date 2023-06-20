@@ -267,26 +267,7 @@ def node_similarity(C1,N1,local_com,G,global_com,maxsize,quanzhong,localsmi):
         N = list(set(N))
     return C,N
 
-def select_com(C, filename1111,comcom11,G):
-    detected_C_graph = Function.spgraph(C, G)
-    sp_graph = Function.knowknow(comcom11, filename1111)  # 10个已知社区转换成最短路径形式表示的图
-    sp_graph.append(detected_C_graph)
-    sp = ShortestPath(normalize=True, with_labels=False)  # 初始化最短路径核
-    temp = sp.fit_transform(sp_graph)  # 提取10个已知社区的特征
-    temp = np.nan_to_num(temp)
-    average = np.average(temp, axis=0)
-    coms_id = []
-    threshold = average[len(sp_graph) - 1]
-    for i in range(len(sp_graph) - 1):
-        ele = temp[len(sp_graph) - 1][i]
-        if ele > threshold and ele > average[i]:
-            coms_id.append(i)
-    if len(coms_id) == 0:
-        for i in range(len(sp_graph) - 1):
-            ele = temp[len(sp_graph) - 1][i]
-            if ele > threshold:
-                coms_id.append(i)
-    return coms_id
+
 
 
 def select_com1(C, filename1111,comcom11,G):
