@@ -316,15 +316,15 @@ def si45(nv0,com101,fileedge):
 
             C,M =M2(nv0,g1)
             #print("M",M, len(si), len(g1.nodes))
-            if M>1000:
-                if (len(C))==(len(si)-1):
+            if M>1000: #1000表示社区的模块度是无穷大
+                if (len(C))==(len(si)-1): #表示检测的社区中的节点包含相似性图中的所有节点，模块度设置为-1
                     modu.append(-1)
                     comid.append(C)
-                else:
+                else:#表示检测的社区的模块度是无穷大，且检测的社区中节点不包含相似性图中的所有节点
                     modu.append(1000)
                     comid.append(C)
                 break
-            else:
+            else: #表示社区的模块度不是无穷大，将社区模块度和社区加入列表modu和comid
                 modu.append(M)
                 comid.append(C)
         n+=1
@@ -353,9 +353,9 @@ def Go(para):
     temp = copy.deepcopy(extraNodes)#获得给节点所在的局部结构
     extraNodes.remove(i)
     for ii in extraNodes:
-        if extrasubG.degree(ii)==1 and ii not in list(extrasubG.neighbors(i)):
+        if extrasubG.degree(ii)==1 and ii not in list(extrasubG.neighbors(i)): #移除给定节点所在局部结构度为1的节点且不是节点i的邻居节点
             temp.remove(ii)
-    com10 = copy.deepcopy(knowcomcom)
+    com10 = copy.deepcopy(knowcomcom) #深拷贝 ，防止多进程代码出错
     nv0=len(com10)
     com10.append(temp)
     comid=si45(nv0,com10,filename)#通过算法5获得社区id
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     fileedge = ['amazon-1.90.ungraph.txt', 'dblp-1.90.ungraph.txt','facebook-1.90.ungraph.txt', 'twitter-1.90.ungraph.txt', 'lj-1.90.ungraph.txt']
     path = ['amazon', 'dblp', 'facebook', 'twitter', 'lj']
     datasets = list(zip(seed, knowcom, fileedge, path))
-    for filename in datasets:
+    for filename in datasets: #datasets[:1] 表示跑Amazon数据集 datasets表示跑全部数据集
         print("数据集：", filename[3])
         dataset_knowcom = Function.get_knowcom(filename[1])
         for i in range(1,6):  # 五组已知社区
